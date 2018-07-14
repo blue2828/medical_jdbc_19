@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>报销界面</title>
+    <style>
+        .sub1,.sub2 {
+            margin-top : 20px;
+            float : left;
+            width : 49%;
+        }
+        .sub2 {
+            margin-top : 10%;
+        }
+        .gs1,.gs2 {
+            float : left;
+            width : 49%;
+            margin-top : 10px;
+            line-height : 2em;
+            letter-spacing : 5px;
+        }
+        .sub1 {
+            color : #747474;
+        }
+        p {
+            font-size : 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sub1">
+            <p>个人信息</p>
+            <div class="gs1">
+                <ul>
+                    <li ><span class="name">姓名：</span></li>
+                    <li ><span class="age">年龄：</span></li>
+                    <li ><span class="sex">性别：</span></li>
+                    <li ><span class="join_time">参合时间：</span></li>
+                </ul>
+            </div>
+            <div class="gs2">
+                <ul>
+                    <li ><span class="join_id">参合证号：</span></li>
+                    <li ><span class="join_ticket">参合发票号：</span></li>
+                    <li ><span id="identity_id">身份证：</span></li>
+                    <li ><span class="f_no">家庭编号：</span></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sub2">
+            <form method="post" id="fm" class="layui-form layui-form-pane" lay-filter="form_filter">
+                <div id="identity" class="layui-form-item layui-hide">
+                    <label class="layui-form-label">身份证</label>
+                    <div class="layui-input-inline">
+                        <input class="layui-input" name="identity_id" >
+                    </div>
+                </div>
+                <div id="id" class="layui-form-item">
+                    <label class="layui-form-label">慢性病证号</label>
+                    <div class="layui-input-inline">
+                        <input class="layui-input" lay-verify="required" name="patient_certi_id" placeholder="慢性病证号">
+                    </div>
+                </div>
+                <div id="name" class="layui-form-item">
+                    <label class="layui-form-label">慢性病名字</label>
+                    <div class="layui-input-inline">
+                        <input class="layui-input" placeholder="慢性病名字" name="patient_name" lay-verify="required">
+                    </div>
+                </div>
+                <div id="money" class="layui-form-item">
+                    <label class="layui-form-label">报销金额</label>
+                    <div class="layui-input-inline">
+                        <input class="layui-input" placeholder="报销金额" name="money" lay-verify="required">
+                    </div>
+                </div>
+                <button id="submit_btn" type="button" class="layui-btn layui-btn-normal" style="margin-left:40%;" lay-filter="submit_filter" lay-submit>提交</button>
+            </form>
+        </div>
+
+    </div>
+    <input style="margin-top: 10%;display: none;" class="layui-input identity_id" placeholder="身份证号" >
+    <button type="button" class="layui-hide layui-btn layui-btn-normal submit">提交</button>
+</body>
+    <link rel="stylesheet" href="common/layui/css/layui.css" type="text/css">
+    <script type="text/javascript" src="common/layui/layui.js"></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <script>
+        layui.use(['layer', 'jquery', 'form'], function () {
+            var layer = layui.layer, $ = layui.jquery, form = layui.form;
+            layer.open({
+                type : 1,
+                content : $('.identity_id'),
+                area : ['300px', '180px'],
+                btn : ['提交'],
+                closeBtn : 0,
+                yes : function (layero, index) {
+                    $('.submit').click();
+                },
+            });
+             $('.container').css('display', 'none');
+            $('.submit').click(function() {
+                var identity_id = $('.identity_id').val();
+                var reg = /^[0-9]{18}$/;
+                if (!reg.test(identity_id)) layer.msg('身份证格式不对', {icon : 5, time : 1200});
+                else {
+                    $("input[name='identity_id']").val(identity_id);
+                    $.post('signUpAction_checkSignUp', {'identity_id' : identity_id}, function(result) {
+                        if(result.success)  {
+                            $('.container').css('display', 'block');
+                            layer.closeAll('page');
+                            $.post('fbAction_getOne', {'identity_id' : $("input[name='identity_id']").val()}, function(result) {
+                                var data = result.data[0];
+                                $('.name').text($('.name').text() + data.name);
+                                $('.age').text($('.age').text() + (new Date().getYear() - data.age));
+                                $('.sex').text($('.sex').text() + data.fb_sex);
+                                $('.join_time').text($('.join_time').text() + data.ch_time);
+                                $('.join_id').text($('.join_id').text() + data.ch_certi_id);
+                                $('.join_ticket').text($('.join_ticket').text() + data.ch_ticket_id);
+                                $('.identity_id').text($('.identity_id').text() + data.fb_identity_id);
+                                $('.f_no').text($('.f_no').text() + data.fb_fno);
+                            }, 'json');
+                        }
+                        else
+                            layer.msg('该身份证号未参合', {icon : 5 ,time : 1200});
+                    }, 'json');
+                }
+            });
+               form.on('submit(submit_filter)', function (data) {
+                   $.ajax({
+                       url : 'fbAction_getOne',
+                       async : true,
+                       contentType : 'application/json',
+                       dataType : 'json',
+                       data : data.field,
+                       success : function (result) {
+                           if((result.data[0].patient_certi_id == data.field.patient_certi_id) && (result.data[0].patient_name == data.field.patient_name)) {
+                               layer.confirm('确定要报销吗', function () {
+                                    $.post('bxAction_doBaoxiao', {'money' : data.field.money, 'identity_id' : data.field.identity_id}, function (result) {
+                                        if(result.success) {
+                                            layer.msg("已报销" + result.finalM + '元');
+                                            setTimeout(function () {
+                                                window.open('pageController_patient_viewResult?identity_id=' + data.field.identity_id);
+                                            }, '1200');
+                                        }else {
+                                            layer.msg("errMsg", result.errMsg);
+                                        }
+                                    }, 'json');
+                               });
+                           }
+                       }
+                   });
+               });
+            });
+    </script>
+</html>

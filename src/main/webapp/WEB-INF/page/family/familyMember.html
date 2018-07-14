@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>家庭成员管理</title>
+</head>
+<body>
+<button style="margin : 5px 0 0 2px;" type="button" class="add layui-btn layui-btn-normal"><i class="layui-icon">&#xe654;</i><span>添加</span></button>
+<button style="margin : 5px 0 0 2px;" type="button" class="delAll layui-btn layui-btn-danger"><i class="layui-icon">&#xe640;</i><span>批量删除</span></button>
+<table id="fb_tb" lay-filter="tb_filter"></table>
+<div class="layui-hide" id="tb">
+    <button class="layui-btn layui-btn-normal layui-btn-mini" lay-event="del"><i class="layui-icon">&#xe640;</i><span>删除</span></button>
+</div>
+<div id="infoFrame" style="display:none;margin:20px 0 0 6%;">
+    <form method="post" id="fm" class="layui-form layui-form-pane" lay-filter="form_filter">
+        <div id="col-1" class="layui-form-item">
+            <label class="layui-form-label">家庭编号</label>
+            <div class="layui-input-inline">
+                <input name="familyMember.familyNo" class="layui-input layui-disabled" readonly>
+            </div>
+            <label class="layui-form-label">姓名</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" placeholder="姓名" name="familyMember.name" lay-verify="required">
+            </div>
+        </div>
+        <div id="col-2" class="layui-form-item">
+            <label class="layui-form-label">身份证</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" placeholder="身份证" name="familyMember.identity_id" lay-verify="identity">
+            </div>
+            <label class="layui-form-label">性别</label>
+            <div class="layui-input-inline">
+                <select name="familyMember.sex" lay-filter="sex_filter" lay-verify="required">
+                    <option value="">请选择...</option>
+                    <option value="0">男</option>
+                    <option value="1">女</option>
+                </select>
+            </div>
+        </div>
+        <div id="col-3" class="layui-form-item">
+            <label class="layui-form-label">家庭住址</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" placeholder="家庭住址" name="familyMember.address" >
+            </div>
+            <label class="layui-form-label">联系方式</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" placeholder="联系方式" name="familyMember.phone" lay-verify="phone">
+            </div>
+        </div>
+        <div id="col-4" class="layui-form-item">
+            <label class="layui-form-label">与户主关系</label>
+            <div class="layui-input-inline">
+                <select name="familyMember.gxWithHost" lay-filter="gx_filter" lay-verify="required">
+                    <option value="">请选择...</option>
+                    <option value="0">夫妻</option>
+                    <option value="1">父子</option>
+                    <option value="2">父女</option>
+                </select>
+            </div>
+        </div>
+        <button id="submit_btn" type="button" class="layui-hide layui-btn layui-btn-normal" style="margin-left:40%;" lay-filter="submit_filter" lay-submit>提交</button>
+    </form>
+</div>
+</body>
+
+<link rel="stylesheet" href="common/layui/css/layui.css" type="text/css">
+<script type="text/javascript" src="common/layui/layui.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/publicSetup.js"></script>
+<script>
+    layui.use(['layer', 'jquery', 'form', 'upload', 'element', 'table'], function () {
+        var layer = layui.layer, $ = layui.jquery, form = layui.form,
+            upload = layui.upload, element = layui.element, table = layui.table;
+        var urlArgs = window.location.search;
+        var args = urlArgs.substring(urlArgs.indexOf("=") + 1).split("&");
+        var identity_id = args[0];
+        var familyNo = args[1].substring(args[1].indexOf("=") + 1);
+        var tableRender = table.render({
+            height : 400,
+            elem : '#fb_tb',
+            url : 'fbAction_getAllFbs?identity_id=' + identity_id,
+            page : true,
+            id : 'tb_id',
+            cols : [[
+                {field : 'checkbox', width : 80, checkbox : true},
+                {field : 'fb_fno', title : '家庭编号', align : 'center',  width : 180},
+                {field : 'name', title : '姓名', align : 'center',  width : 180},
+                {field : 'ch_certi_id', title : '农合证号', align : 'center',  width : 180},
+                {field : 'fb_identity_id', title : '身份证号', align : 'center',  width : 180},
+                {field : 'fb_sex', title : '性别', align : 'center',  width : 100},
+                {field : 'age', title : '年龄', align : 'center',  width : 100},
+                {field : 'address', title : '家庭住址', align : 'center',  width : 100},
+                {field : 'phone', title : '联系方式', align : 'center',  width : 180},
+                {field : 'ch_time', title : '参合时间', align : 'center',  width : 180},
+                {field : 'ch_ticket_id', title : '参合发票号', align : 'center',  width : 100},
+                {field : 'gx', title : '与户主关系', align : 'center',  width : 100},
+                {title : '操作', align : 'center',  width : 200, toolbar : '#tb'},
+            ]]
+        });
+        $.post('userAction_getCurrentUser',function(result){
+            var currentUser = result.data[0];
+            if (currentUser.role_id == 2 || currentUser.role_id == 3) {
+                $('.add').addClass('layui-hide');
+                $('.delAll').addClass('layui-hide');
+                $("button[lay-event='del']").addClass('layui-disabled');
+                $("button[lay-event='manageFm']").addClass('layui-disabled');
+            }
+        });
+        var delMethod = function(obj, id) {
+            if ($("button").hasClass('layui-disabled')) return;
+            layer.confirm('确定要删除吗？', {title:'系统提示', icon : 3}, function(index) {
+                layer.close(index);
+                $.post('fbAction_delFb', {'ids' : id}, function(result) {
+                    if(result.success) {
+                        layer.msg("删除成功", {icon : 6, time : 800});
+                        if(obj != undefined) obj.del();
+                        else {
+                            tableRender.reload('tb_id', {
+                                url : 'userAction_getAllUsers'
+                            });
+                        }
+                    }else{
+                        result.errMsg == undefined ? layer.msg("系统错误，请联系管理员", {icon:5}) : layer.msg(result.errMsg, {icon : 5});
+                    }
+                });
+            });
+        };
+        var saveUrl = '';
+        table.on('tool(tb_filter)', function(obj) {
+            var event = obj.event;
+            var data = obj.data;
+            if(event == 'del') delMethod(obj, data.fb_identity_id);
+        });
+        $('.delAll').click(function() {
+            var checkStatus = table.checkStatus('tb_id');
+            var data = checkStatus.data;
+            if(data.length == 0) layer.msg("请选择需要删除的行", {icon : 5});
+            else{
+                var idArray = [];
+                $.each(data, function(key, value) {
+                    idArray.push(value.fb_identity_id);
+                });
+                var ids = idArray.join(",");
+                delMethod(undefined, ids);
+            }
+        });
+        form.on('submit(submit_filter)',function(data) {
+            $.ajax({
+                url : saveUrl,
+                async : true,
+                contentType : 'application/json',
+                dataType : 'json',
+                data : data.field,
+                success : function(result) {
+                    if(result.success) {
+                        layer.msg('保存成功', {icon : 6, time : 1000});
+                        tableRender.reload('tb_id', {
+                            url : 'fbAction_getAllFbs?identity_id=' + identity_id
+                        });
+                        layer.closeAll('page');
+                        cleanFormCache();
+                    }else layer.msg(result.errMsg, {icon : 5, time : 1000});
+                },
+                error : function(result) {
+                    layer.msg('服务器出错，请联系管理员', {icon : 5});
+                }
+            });
+        });
+        var openFrame = function(title, openType, id){
+            layer.open({
+                type : 1,
+                content : $('#infoFrame'),
+                btn : ['提交'],
+                title : title,
+                area : ['700px', '500px'],
+                yes : function(index, layero) {
+                    $('#submit_btn').click();
+                },
+                cancel : function(index, layero) {
+                    cleanFormCache();
+                },
+                end : function() {
+                    cleanFormCache();
+                }
+            });
+        };
+        var cleanFormCache = function() {
+            $("input[name='familyMember.name']").val('');
+            $("input[name='familyMember.identity_id']").val('');
+            $("input[name='familyMember.address']").val('');
+            $("input[name='familyMember.phone']").val('');
+            $("select[name='familyMember.gxWithHost']").val('');
+            $("select[name='familyMember.sex']").val('');
+            form.render('select', 'form_filter');
+        };
+        $('.add').click(function() {
+            openFrame('添加家庭成员', 0, '');
+            $("input[name='familyMember.familyNo']").val(familyNo);
+            saveUrl = 'fbAction_addFb?updateType=0';
+        });
+    });
+</script>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>管理县</title>
+</head>
+<body>
+    <button style="margin : 5px 0 0 2px;" type="button" class="add layui-btn layui-btn-normal"><i class="layui-icon">&#xe654;</i><span>添加</span></button>
+    <button style="margin : 5px 0 0 2px;" type="button" class="delAll layui-btn layui-btn-danger"><i class="layui-icon">&#xe640;</i><span>批量删除</span></button>
+    <div class="layui-input-inline" style="margin-top:6px;">
+        <input class="searchInfo layui-input" placeholder="请输入需要搜索的县" autocomplete="off">
+    </div>
+    <button style="margin : 5px 0 0 2px;" type="button" class="search layui-btn"><i class="layui-icon">&#xe615;</i><span>搜索</span></button>
+    <table id="county_tb" lay-filter="tb_filter"></table>
+    <div class="layui-hide" id="tb">
+        <button class="layui-btn layui-btn-normal layui-btn-mini" lay-event="del"><i class="layui-icon">&#xe640;</i><span>删除</span></button>
+        <button class="layui-btn layui-btn-mini" lay-event="edit"><i class="layui-icon">&#xe642;</i><span>编辑</span></button>
+    </div>
+    <div id="infoFrame" style="display:none;margin-top:10px;">
+        <form method="post" id="fm" class="layui-form layui-form-pane" lay-filter="form_filter">
+            <div id="county" class="layui-form-item">
+                <label class="layui-form-label">县名</label>
+                <div class="layui-input-inline">
+                    <input class="layui-input" autocomplete="off" placeholder="请输入县名" name="county.countyName" lay-verify="required">
+                </div>
+            </div>
+            <button id="submit_btn" type="button" class="layui-hide layui-btn layui-btn-normal" style="margin-left:40%;" lay-filter="submit_filter" lay-submit>提交</button>
+        </form>
+    </div>
+</body>
+    <link rel="stylesheet" href="common/layui/css/layui.css" type="text/css">
+    <script type="text/javascript" src="common/layui/layui.js"></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <script>
+        layui.use(['layer', 'jquery', 'form', 'upload', 'element', 'table'], function () {
+            var layer = layui.layer, $ = layui.jquery, form = layui.form,
+                upload = layui.upload, element = layui.element, table = layui.table;
+           /* $.post('userAction_getCurrentUser',function(result){
+                var currentUser = result.data[0];
+            },'json');*/
+            var tableRender = table.render({
+                height : 400,
+                elem : '#county_tb',
+                url : 'areaAction_getCounties',
+                page : true,
+                id : 'tb_id',
+                cols : [[
+                    {field : 'checkbox', width : 80, checkbox : true},
+                    {field : 'countyNo', title : '县编码', align : 'center',  width : 200},
+                    {field : 'countyName', title : '县名', align : 'center',  width : 300},
+                    {title : '操作', align : 'center',  width : 200, toolbar : '#tb'},
+                ]]
+            });
+            var delMethod = function(obj, id) {
+                layer.confirm('确定要删除吗？', {title:'系统提示', icon : 3}, function(index) {
+                    layer.close(index);
+                    $.post('areaAction_delCounty', {'ids' : id}, function(result) {
+                        if(result.success) {
+                            if(obj != undefined) obj.del();
+                            else {
+                                tableRender.reload('tb_id', {
+                                    url : 'areaAction_getCounties'
+                                });
+                            }
+                        }else{
+                            result.errMsg == undefined ? layer.msg("系统错误，请联系管理员", {icon:5}) : layer.msg(result.errMsg, {icon : 5});
+                        }
+                    });
+                });
+            };
+            var saveUrl = '';
+            table.on('tool(tb_filter)', function(obj) {
+               var event = obj.event;
+               var data = obj.data;
+               if(event == 'del') delMethod(obj, data.id);
+               if(event == 'edit') {
+                   openFrame('编辑县', 1, data.id);
+                   $("input[name='county.countyName']").val(data.countyName);
+                   saveUrl = 'areaAction_saveCounty?version=1';
+               }
+            });
+            $('.delAll').click(function() {
+                 var checkStatus = table.checkStatus('tb_id');
+                 var data = checkStatus.data;
+                if(data.length == 0) layer.msg("请选择需要删除的行", {icon : 5});
+                else{
+                    var idArray = [];
+                    $.each(data, function(key, value) {
+                        idArray.push(value.id);
+                    });
+                    var ids = idArray.join(",");
+                    delMethod(undefined, ids);
+                }
+            });
+            $('.search').click(function() {
+                var info = $('.searchInfo').val();
+                tableRender.reload({
+                    url : 'areaAction_getCounties',
+                    where : {
+                        searchInfo : info
+                    }
+                });
+            });
+            form.on('submit(submit_filter)',function(data) {
+                $.ajax({
+                    url : saveUrl,
+                    async : true,
+                    contentType : 'application/json',
+                    dataType : 'json',
+                    data : data.field,
+                    success : function(result) {
+                        if(result.success) {
+                            layer.msg('保存成功', {icon : 6, time : 1000});
+                            tableRender.reload('tb_id', {
+                                url : 'areaAction_getCounties'
+                            });
+                            layer.closeAll('page');
+                            cleanFormCache();
+                        }else layer.msg(result.errMsg, {icon : 5, time : 1000});
+                    },
+                    error : function(result) {
+                        layer.msg('服务器出错，请联系管理员', {icon : 5});
+                    }
+                });
+            });
+            var openFrame = function(title, openType, id){
+                var appendCNNode = function() {
+                    $("#county").before(
+                        "            <div id=\"countyId\" class=\"layui-hide layui-form-item\">\n" +
+                        "                <label class=\"layui-form-label\">id</label>\n" +
+                        "                <div class=\"layui-input-inline\">\n" +
+                        "                    <input class=\"layui-input\" autocomplete=\"off\"  name=\"county.id\" value="+id+">\n" +
+                        "                </div>\n" +
+                        "            </div>"
+                    );
+                };
+                if(openType == 0) {
+                    if($("#countyId").length != 0) $("#countyId").remove();
+                 }else {
+                    if($("#countyId").length == 0) {
+                        appendCNNode();
+                    } else{
+                        $("#countyId").remove();
+                        appendCNNode();
+                    }
+                }
+                layer.open({
+                    type : 1,
+                    content : $('#infoFrame'),
+                    btn : ['提交'],
+                    title : title,
+                    area : ['360px', '200px'],
+                    yes : function(index, layero) {
+                        $('#submit_btn').click();
+                    },
+                    cancel : function(index, layero) {
+                        cleanFormCache();
+                    },
+                    end : function() {
+                        cleanFormCache();
+                    }
+                });
+            };
+            var cleanFormCache = function() {
+                $("input[name='county.countyName']").val('');
+            };
+            $('.add').click(function() {
+                openFrame('添加县', 0, '');
+                saveUrl = 'areaAction_saveCounty?version=0';
+            });
+        });
+    </script>
+</html>

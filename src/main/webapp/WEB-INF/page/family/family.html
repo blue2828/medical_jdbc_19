@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>家庭档案</title>
+    <style>
+        .layui-form-item {
+            margin-left : 13%;
+        }
+    </style>
+</head>
+<body>
+<button style="margin : 5px 0 0 2px;" type="button" class="add layui-btn layui-btn-normal"><i class="layui-icon">&#xe654;</i><span>添加</span></button>
+<table id="family_tb" lay-filter="tb_filter"></table>
+<div class="layui-hide" id="tb">
+    <button class="layui-btn layui-btn-mini" lay-event="edit"><i class="layui-icon">&#xe642;</i><span>编辑</span></button>
+    <button class="layui-btn layui-btn-mini" lay-event="manageFm"><i class="layui-icon">&#xe642;</i><span>管理家庭成员</span></button>
+</div>
+<div id="infoFrame" style="display:none;margin-top:10px;">
+    <form method="post" id="fm" class="layui-form layui-form-pane" lay-filter="form_filter">
+        <div id="countyName" class="layui-form-item">
+            <label class="layui-form-label">县</label>
+            <div class="layui-input-inline">
+                <select class="countyNo" lay-filter="co_select" lay-verify="required">
+                    <option value="">请选择...</option>
+                </select>
+            </div>
+        </div>
+        <div id="townName" class="layui-form-item">
+            <label class="layui-form-label">镇</label>
+            <div class="layui-input-inline">
+                <select class="townNo" lay-filter="t_select" lay-verify="required">
+                    <option value="">请选择...</option>
+                </select>
+            </div>
+        </div>
+        <div id="csName" class="layui-form-item">
+            <label class="layui-form-label">村</label>
+            <div class="layui-input-inline">
+                <select class='csNo' lay-filter="cs_select" lay-verify="required">
+                    <option value="">请选择...</option>
+                </select>
+            </div>
+        </div>
+        <div id="site_group" class="layui-form-item">
+            <label class="layui-form-label">组名</label>
+            <div class="layui-input-inline">
+                <select class='gNo' name="family.site_group_no" lay-filter="g_select" lay-verify="required">
+                    <option value="">请选择...</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item" id="host_name">
+            <label class="layui-form-label">户主名</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" placeholder="户主名" name="family.f_host_name" lay-verify="required">
+            </div>
+        </div>
+        <div class="layui-form-item" id="identity">
+            <label class="layui-form-label">身份证</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" placeholder="身份证" name="family.identity_id" lay-verify="required|identity">
+            </div>
+        </div>
+        <button id="submit_btn" type="button" class="layui-hide layui-btn layui-btn-normal" style="margin-left:40%;" lay-filter="submit_filter" lay-submit>提交</button>
+    </form>
+</div>
+</body>
+
+<link rel="stylesheet" href="common/layui/css/layui.css" type="text/css">
+<script type="text/javascript" src="common/layui/layui.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/publicSetup.js"></script>
+<script>
+    layui.use(['layer', 'jquery', 'form', 'upload', 'element', 'table'], function () {
+        var layer = layui.layer, $ = layui.jquery, form = layui.form,
+            upload = layui.upload, element = layui.element, table = layui.table;
+        var tableRender = table.render({
+            height : 400,
+            elem : '#family_tb',
+            url : 'familyAction_getAllFms',
+            page : true,
+            id : 'tb_id',
+            cols : [[
+                {field : 'checkbox', width : 80, checkbox : true},
+                {field : 'countyNo', title : '县级编码', align : 'center',  width : 120},
+                {field : 't_townNo', title : '乡镇编码', align : 'center',  width : 120},
+                {field : 'cs_no', title : '村编码', align : 'center',  width : 120},
+                {field : 's_no', title : '组编号', align : 'center',  width : 140},
+                {field : 'f_fno', title : '家庭编码', align : 'center',  width : 180},
+                {field : 'f_host_name', title : '户主', align : 'center',  width : 120},
+                {field : 'identity_id', title : '户主身份证', align : 'center',  width : 200},
+                {field : 'create_time', title : '创建时间', align : 'center',  width : 200},
+                {title : '操作', align : 'center',  width : 160, toolbar : '#tb'},
+            ]]
+        });
+        $.post('userAction_getCurrentUser',function(result){
+            var currentUser = result.data[0];
+            if (currentUser.role_id == 2 || currentUser.role_id == 3) {
+                $('.add').addClass('layui-hide');
+                $("button[lay-event='edit']").addClass('layui-disabled');
+                $("button[lay-event='manageFm']").addClass('layui-disabled');
+            }
+        });
+        $.post('areaAction_getCounties', function(result) {
+            if($(".countyNo").children().length > 1) {
+                $(".countyNo").children().each(function(key, value) {
+                    if(key == 0) return true;
+                    else $(value).remove();
+                });
+            }
+            $.each(result.data, function(key, value) {
+                $(".countyNo").append("<option value=" + value.countyNo + ">" + value.countyName + "</option>");
+            });
+            form.render('select', 'form_filter');
+        }, 'json');
+        form.on('select(co_select)', function(data) {
+            $.post('areaAction_getTowns?getVersion=getByCascade&countyId=' + data.value, function(result) {
+                if($(".townNo").children().length > 1) {
+                    $(".townNo").children().each(function(key, value) {
+                        if(key == 0) return true;
+                        else $(value).remove();
+                    });
+                }
+                $.each(result.data, function(key, value) {
+                    $(".townNo").append("<option value=" + value.t_townNo + ">" + value.townName + "</option>");
+                });
+                form.render('select','form_filter');
+            }, 'json');
+        });
+        form.on('select(t_select)', function(data) {
+            $.post('areaAction_getCsites?getVersion=getByCascade&townId=' + data.value, function(result) {
+                if($(".csNo").children().length > 1) {
+                    $(".csNo").children().each(function(key, value) {
+                        if(key == 0) return true;
+                        else $(value).remove();
+                    });
+                }
+                $.each(result.data, function(key, value) {
+                    $(".csNo").append("<option value=" + value.t_csNo + ">" + value.cs_name + "</option>");
+                });
+                form.render('select','form_filter');
+            }, 'json');
+        });
+        form.on('select(cs_select)', function(data) {
+            $.post('areaAction_getSgs?getVersion=getByCascade&countrysiteNo=' + data.value, function(result) {
+                if($(".gNo").children().length > 1) {
+                    $(".gNo").children().each(function(key, value) {
+                        if(key == 0) return true;
+                        else $(value).remove();
+                    });
+                }
+                $.each(result.data, function(key, value) {
+                    $(".gNo").append("<option value=" + value.s_no + ">" + value.s_name + "</option>");
+                });
+                form.render('select','form_filter');
+            }, 'json');
+        });
+        var saveUrl = '';
+        table.on('tool(tb_filter)', function(obj) {
+            var event = obj.event;
+            var data = obj.data;
+            if(event == 'manageFm') {
+                if ($(this).hasClass('layui-disabled')) return;
+                window.open('pageController_family_familyMember?identity_id=' + data.identity_id + '&familyNo=' + data.f_fno);
+            }
+            if(event == 'edit') {
+                if ($(this).hasClass('layui-disabled')) return;
+                openFrame('编辑家庭档案', 1, data.f_id);
+                $(".countyNo").val(data.countyNo);
+                if($(".townNo").children().length > 1) {
+                    $(".townNo").children().each(function(key, value) {
+                        if(key == 0) return true;
+                        else $(value).remove();
+                    });
+                }
+                if($(".csNo").children().length > 1) {
+                    $(".csNo").children().each(function(key, value) {
+                        if(key == 0) return true;
+                        else $(value).remove();
+                    });
+                }
+                if($(".gNo").children().length > 1) {
+                    $(".gNo").children().each(function(key, value) {
+                        if(key == 0) return true;
+                        else $(value).remove();
+                    });
+                }
+                $(".townNo").append("<option value=" + data.t_townNo + "> " + data.townName + " </option>");
+                $(".townNo").val(data.t_townNo);
+                $(".csNo").append("<option value=" + data.cs_no + "> " + data.cs_name + " </option>");
+                $(".csNo").val(data.cs_no);
+                $(".gNo").append("<option value=" + data.s_no + "> " + data.s_name + " </option>");
+                $(".gNo").val(data.s_no);
+                $("input[name='family.f_host_name']").val(data.f_host_name);
+                $("input[name='family.identity_id']").val(data.identity_id);
+                form.render('select', 'form_filter');
+                saveUrl = 'familyAction_saveFm?version=1';
+            }
+        });
+        form.on('submit(submit_filter)',function(data) {
+            $.ajax({
+                url : saveUrl,
+                async : true,
+                method : 'get',
+                contentType : 'application/json',
+                dataType : 'json',
+                data : data.field,
+                success : function(result) {
+                    if(result.success) {
+                        layer.msg('保存成功', {icon : 6, time : 1000});
+                        tableRender.reload('tb_id', {
+                            url : 'familyAction_getAllFms'
+                        });
+                        layer.closeAll('page');
+                        cleanFormCache();
+                    }else layer.msg(result.errMsg, {icon : 5, time : 1000});
+                },
+                error : function(result) {
+                    layer.msg('服务器出错，请联系管理员', {icon : 5});
+                }
+            });
+        });
+        var openFrame = function(title, openType, id){
+            var appendCNNode = function() {
+                $("#site_group").before(
+                    "            <div id=\"familyId\" class=\"layui-hide layui-form-item\">\n" +
+                    "                <label class=\"layui-form-label\">家庭编码</label>\n" +
+                    "                <div class=\"layui-input-inline\">\n" +
+                    "                    <input class=\"layui-input\" autocomplete=\"off\"  name=\"family.id\" value=" + id + ">\n" +
+                    "                </div>\n" +
+                    "            </div>"
+                );
+            };
+            if(openType == 0) {
+                if($("#familyId").length != 0) $("#familyId").remove();
+            }else {
+                if($("#familyId").length == 0) {
+                    appendCNNode();
+                } else{
+                    $("#familyId").remove();
+                    appendCNNode();
+                }
+            }
+            layer.open({
+                type : 1,
+                content : $('#infoFrame'),
+                title : title,
+                btn : ['提交'],
+                area: ['400px','500px'],
+                yes : function(index, layero) {
+                    $('#submit_btn').click();
+                },
+                cancel : function(index, layero) {
+                    cleanFormCache();
+                },
+                end : function() {
+                    cleanFormCache();
+                }
+            });
+        };
+        var cleanFormCache = function() {
+            $("input[name='family.identity_id']").val('');
+            $("input[name='family.f_host_name']").val('');
+            $(".countyNo").val('');
+            $(".townNo").val('');
+            $(".csNo").val('');
+            $(".gNo").val('');
+            form.render("select", 'form_filter');
+        };
+        $('.add').click(function() {
+            openFrame('添加家庭档案', 0, '');
+            saveUrl = 'familyAction_saveFm?version=0';
+        });
+    });
+</script>
+</html>

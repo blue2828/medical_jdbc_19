@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>家庭成员管理</title>
+</head>
+<body>
+<div class="layui-input-inline" style="margin-top:6px;">
+    <input class="searchInfo layui-input" placeholder="根据户主搜索" autocomplete="off">
+</div>
+<button style="margin : 5px 0 0 2px;" type="button" class="search layui-btn"><i class="layui-icon">&#xe615;</i><span>搜索</span></button>
+<table id="fb_tb" lay-filter="tb_filter"></table>
+<div class="layui-hide" id="tb">
+    <button class="layui-btn layui-btn-normal layui-btn-mini" lay-event="signUp"><i class="layui-icon">&#xe640;</i><span>参合</span></button>
+</div>
+</body>
+
+<link rel="stylesheet" href="common/layui/css/layui.css" type="text/css">
+<script type="text/javascript" src="common/layui/layui.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/publicSetup.js"></script>
+<script>
+    layui.use(['layer', 'jquery', 'form', 'upload', 'element', 'table'], function () {
+        var layer = layui.layer, $ = layui.jquery, form = layui.form,
+            upload = layui.upload, element = layui.element, table = layui.table;
+        var tableRender = table.render({
+            height : 400,
+            elem : '#fb_tb',
+            url : 'fbAction_getAllFbs',
+            page : true,
+            id : 'tb_id',
+            cols : [[
+                {field : 'checkbox', width : 80, checkbox : true},
+                {field : 'fb_fno', title : '家庭编号', align : 'center',  width : 180},
+                {field : 'name', title : '姓名', align : 'center',  width : 180},
+                {field : 'ch_certi_id', title : '农合证号', align : 'center',  width : 180},
+                {field : 'fb_identity_id', title : '身份证号', align : 'center',  width : 180},
+                {field : 'fb_sex', title : '性别', align : 'center',  width : 100},
+                {field : 'age', title : '年龄', align : 'center',  width : 100},
+                {field : 'address', title : '家庭住址', align : 'center',  width : 100},
+                {field : 'phone', title : '联系方式', align : 'center',  width : 180},
+                {field : 'ch_time', title : '参合时间', align : 'center',  width : 180},
+                {field : 'ch_ticket_id', title : '参合发票号', align : 'center',  width : 100},
+                {field : 'gx', title : '与户主关系', align : 'center',  width : 100},
+                {title : '操作', align : 'center',  width : 200, toolbar : '#tb'},
+            ]]
+        });
+        $.post('userAction_getCurrentUser',function(result){
+            var currentUser = result.data[0];
+            if (currentUser.role_id == 2 || currentUser.role_id == 3) {
+                $("button[lay-event='signUp']").addClass('layui-disabled');
+            }
+        });
+        $('.search').click(function() {
+            var info = $('.searchInfo').val();
+            tableRender.reload({
+                url : 'fbAction_getAllFbs',
+                where : {
+                    'f_host_name' : info
+                }
+            });
+        });
+        table.on('tool(tb_filter)', function(obj) {
+            var event = obj.event;
+            var data = obj.data;
+            if (event == 'signUp') {
+                if($(this).hasClass('layui-disabled')) return;
+                $.post('signUpAction_signUp', {'familyNo' : data.fb_fno, 'identity_id' : data.fb_identity_id}, function(result) {
+                    if (result.success) {
+                        layer.msg("参合登记成功", {icon : 6, time : 800});
+                        tableRender.reload({
+                            url : 'fbAction_getAllFbs'
+                        });
+                    } else layer.msg(result.errMsg, {icon : 5, time : 1200});
+                });
+            }
+        });
+    });
+</script>
+</html>

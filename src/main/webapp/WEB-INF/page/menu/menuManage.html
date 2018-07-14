@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>菜单管理</title>
+</head>
+<body>
+<button style="margin : 5px 0 0 2px;" type="button" class="add layui-btn layui-btn-normal"><i class="layui-icon">&#xe654;</i><span>添加</span></button>
+<button style="margin : 5px 0 0 2px;" type="button" class="delAll layui-btn layui-btn-danger"><i class="layui-icon">&#xe640;</i><span>批量删除</span></button>
+<table id="menu_tb" lay-filter="tb_filter"></table>
+<div class="layui-hide" id="tb">
+    <button class="layui-btn layui-btn-normal layui-btn-mini" lay-event="del"><i class="layui-icon">&#xe640;</i><span>删除</span></button>
+    <button class="layui-btn layui-btn-mini" lay-event="edit"><i class="layui-icon">&#xe642;</i><span>编辑</span></button>
+</div>
+<div id="infoFrame" style="display:none;margin:30px 0 0 8%;">
+    <form method="post" id="fm" class="layui-form layui-form-pane" lay-filter="form_filter">
+        <div id="menu" class="layui-form-item">
+            <label class="layui-form-label">一级菜单</label>
+            <div class="layui-input-inline">
+                <select name="menu.parent_no" lay-filter="parent_filter" lay-verify="required">
+                    <option value="">请选择...</option>
+                </select>
+            </div>
+            <label class="layui-form-label">二级菜单</label>
+            <div class="layui-input-inline">
+                <select name="menu.menu_no" lay-filter="son_filter" lay-verify="required">
+                    <option value="">请选择...</option>
+                </select>
+            </div>
+        </div>
+        <div id="role_group" class="layui-form-item">
+            <label class="layui-form-label">角色访问组</label>
+            <input type="checkbox" name="role_id1" title="超级管理员" lay-skin="primary" lay-filter="check_filter1">
+            <input type="checkbox" name="role_id2" title="县合管办领导" lay-skin="primary" lay-filter="check_filter2">
+            <input type="checkbox" name="role_id3" title="县合管办经办人" lay-skin="primary" lay-filter="check_filter3">
+            <input type="checkbox" name="role_id4" title="乡镇农合经办人" lay-skin="primary" lay-filter="check_filter4">
+        </div>
+        <button id="submit_btn" type="button" class="layui-hide layui-btn layui-btn-normal" style="margin-left:40%;" lay-filter="submit_filter" lay-submit>提交</button>
+    </form>
+</div>
+</body>
+
+<link rel="stylesheet" href="common/layui/css/layui.css" type="text/css">
+<script type="text/javascript" src="common/layui/layui.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/publicSetup.js"></script>
+<script>
+    layui.use(['layer', 'jquery', 'form', 'upload', 'element', 'table'], function () {
+        var layer = layui.layer, $ = layui.jquery, form = layui.form,
+            upload = layui.upload, element = layui.element, table = layui.table;
+        var tableRender = table.render({
+            height : 400,
+            elem : '#menu_tb',
+            url : 'systemAction_getAllMenus',
+            page : true,
+            id : 'tb_id',
+            cols : [[
+                {field : 'checkbox', width : 80, checkbox : true},
+                {field : 'menu_name', title : '二级菜单名', align : 'center',  width : 180},
+                {field : 'name', title : '一级菜单名', align : 'center',  width : 180},
+                {field : 'role_group', title : '角色访问组', align : 'center',  width : 500},
+                {title : '操作', align : 'center',  width : 180, toolbar : '#tb'},
+            ]]
+        });
+        $.post('page/webMenu.json', function(result) {
+            if($("select[name='menu.parent_no']").children().length > 1) {
+                $("select[name='menu.parent_no']").children().each(function(key, value) {
+                    if(key == 0) return true;
+                    else $(value).remove();
+                });
+            }
+            $.each(result.menus, function(key, value) {
+                $("select[name='menu.parent_no']").append("<option value=" + value[0].id + ">" + value[0].p_name + "</option>");
+            });
+            form.render('select', 'form_filter');
+        }, 'json');
+        var appendSubMenu = function (data, type, s_id) {
+            $.post('page/webMenu.json', function(result) {
+                if($("select[name='menu.menu_no']").children().length > 1) {
+                    $("select[name='menu.menu_no']").children().each(function(key, value) {
+                        if(key == 0) return true;
+                        else $(value).remove();
+                    });
+                }
+                $.each(result.menus[data], function(key, value) {
+                    $("select[name='menu.menu_no']").append("<option value=" + value.s_id + ">" + value.s_name + "</option>");
+                });
+                type == 1 ? $("select[name='menu.menu_no']").val(s_id) : undefined;
+                form.render('select', 'form_filter');
+            }, 'json');
+        };
+        var clearFmCache = function () {
+            $("select[name='menu.menu_no']").val('');
+            $("select[name='menu.parent_no']").val('');
+            $.each($("#role_group").find("input[type='checkbox']"), function(key ,value) {
+                $(value).removeAttr('checked');
+            });
+            form.render("checkbox", "form_filter");
+            form.render("select", 'form_filter');
+        };
+        form.on('select(parent_filter)', function(data) {
+            appendSubMenu(data.value - 1, 0, undefined);
+        });
+        var delMethod = function(obj, id) {
+            layer.confirm('确定要删除吗？', {title:'系统提示', icon : 3}, function(index) {
+                layer.close(index);
+                $.post('systemAction_delMenu', {'ids' : id}, function(result) {
+                    if(result.success) {
+                        if(obj != undefined) obj.del();
+                        else {
+                            tableRender.reload('tb_id', {
+                                url : 'systemAction_getAllMenus'
+                            });
+                        }
+                    }else{
+                        result.errMsg == undefined ? layer.msg("系统错误，请联系管理员", {icon:5}) : layer.msg(result.errMsg, {icon : 5});
+                    }
+                });
+            });
+        };
+        var saveUrl = '';
+        table.on('tool(tb_filter)', function(obj) {
+            var event = obj.event;
+            var data = obj.data;
+            if(event == 'del') delMethod(obj, data.menu_no);
+            if(event == 'edit') {
+                openFrame('编辑菜单', 1, data.id);
+                $("select[name='menu.parent_no']").val(data.parent_no);
+                appendSubMenu(data.parent_no - 1, 1, data.menu_no);
+                $.each(data.role_id.split(","), function(key, value) {
+                    $("input[name=role_id" + value + "]").prop("checked", true);
+                });
+                form.render('checkbox', 'form_filter');
+                form.render('select', 'form_filter');
+                saveUrl = 'systemAction_saveMenu?version=1';
+            }
+        });
+        $('.delAll').click(function() {
+            var checkStatus = table.checkStatus('tb_id');
+            var data = checkStatus.data;
+            if(data.length == 0) layer.msg("请选择需要删除的行", {icon : 5});
+            else{
+                var idArray = [];
+                $.each(data, function(key, value) {
+                    idArray.push(value.menu_no);
+                });
+                var ids = idArray.join(",");
+                delMethod(undefined, ids);
+            }
+        });
+        $('.search').click(function() {
+            var info = $('.searchInfo').val();
+            tableRender.reload({
+                url : 'systemAction_getAllMenus',
+                where : {
+                    searchInfo : info
+                }
+            });
+        });
+        form.on('submit(submit_filter)',function(data) {
+            var count = 0;
+            $.each($("#role_group").find("input[type='checkbox']"), function(key ,value) {
+                $(value).prop('checked') ? count ++ : count;
+            });
+            if(count == 0) {
+                layer.msg("角色组至少选择一个角色", {icon : 5, time : 1000});
+                return;
+            }
+            var no = $(data.form).find('select:eq(0)').val();
+            var role = $(data.form).find("input[type='checkbox']:eq(0)");
+
+            if((no == '3' || no == 3) && role.prop('checked')) {
+                layer.msg("管理员不能使用业务功能", {icon : 5, time : 1000});
+                return;
+            }
+            $.ajax({
+                url : saveUrl,
+                async : true,
+                contentType : 'application/json',
+                dataType : 'json',
+                data : data.field,
+                success : function(result) {
+                    if(result.success) {
+                        layer.msg('保存成功', {icon : 6, time : 1000});
+                        tableRender.reload('tb_id', {
+                            url : 'systemAction_getAllMenus'
+                        });
+                        layer.closeAll('page');
+                        clearFmCache();
+                    }else layer.msg(result.errMsg, {icon : 5, time : 1000});
+                },
+                error : function(result) {
+                    layer.msg('服务器出错，请联系相关人员', {icon : 5});
+                }
+            });
+        });
+        var openFrame = function(title, openType, id) {
+            layer.open({
+                type : 1,
+                content : $('#infoFrame'),
+                btn : ['提交'],
+                title : title,
+                area : ['800px', '400px'],
+                yes : function(index, layero) {
+                    $('#submit_btn').click();
+                },
+                end : function() {
+                    clearFmCache();
+                }
+            });
+        };
+        $('.add').click(function() {
+            openFrame('添加菜单', 0, '');
+            saveUrl = 'systemAction_saveMenu?version=0';
+        });
+    });
+</script>
+</html>

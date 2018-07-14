@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.1//EN" "http://struts.apache.org/dtds/struts-2.1.dtd">
+<struts>
+    <package name="default" extends="struts-default,json-default">
+        <interceptors>
+            <interceptor name="loginInterceptor" class="com.sample.interceptor.loginInterceptor"/>
+            <interceptor-stack name="loginStack">
+                <interceptor-ref name="defaultStack"/>
+                <interceptor-ref name="loginInterceptor">
+                    <param name="excludeMethods">checkOrInputUser,getCodeImage</param>
+                </interceptor-ref>
+            </interceptor-stack>
+        </interceptors>
+        <default-interceptor-ref name="loginStack"/>
+        <global-results>
+            <result name="sessionTimeOut" type="redirect">/page/login.html</result>
+        </global-results>
+        <action name="userAction_*" method="{1}" class="com.sample.action.UserAction">
+            <result name="success" type="json">
+                <param name="root">jb</param>
+                <param name="contentType">application/json</param>
+            </result>
+            <!--<result name = "logoutSuccess" type="redirect">/page/login.html</result>-->
+        </action>
+        <action name="areaAction_*" method="{1}" class="com.sample.action.areaAction">
+            <result name="success" type="json">
+                <param name="root">jsonObject</param>
+                <param name="contentType">application/json</param>
+            </result>
+        </action>
+        <action name="systemAction_*" method="{1}" class="com.sample.action.SystemAction">
+            <result name="success" type="json">
+                <param name="root">jsonObject</param>
+                <param name="contentType">application/json</param>
+            </result>
+        </action>
+        <action name="handleSiteAction_*" method="{1}" class="com.sample.action.handleSiteAction">
+            <result name="success" type="json">
+                <param name="root">jsonObject</param>
+                <param name="contentType">application/json</param>
+            </result>
+        </action>
+        <action name="transactorAction_*" method="{1}" class="com.sample.action.TransactorAction">
+            <result name="success" type="json">
+                <param name="root">jb</param>
+                <param name="contentType">application/json</param>
+            </result>
+        </action>
+        <action name="getCode" method="getCodeImage" class="com.sample.action.createImageCode">
+            <result name="success" type="stream">
+                <param name="contentType">image/jpeg</param>
+                <param name="inputName">inputStream</param>
+            </result>
+        </action>
+        <action name="pageController_*_*" class="com.sample.action.pageController" method="controlPage">
+            <result name="success">/WEB-INF/page/{1}/{2}.html</result>
+        </action>
+        <action name="roleAction_*" method="{1}" class="com.sample.action.RoleAction">
+            <result name="success" type="json">
+                <param name="root">jb</param>
+                <param name="contentType">application/json</param>
+            </result>
+        </action>
+        <action name="familyAction_*" method="{1}" class="com.sample.action.FamilyAction">
+            <result name="success" type="json">
+                <param name="root">jsonObject</param>
+                <param name="contentType">application/json</param>
+            </result>
+        </action>
+        <action name="fbAction_*" method="{1}" class="com.sample.action.fbAction">
+            <result name="success" type="json">
+                <param name="root">jsonObject</param>
+                <param name="contentType">application/json</param>
+            </result>
+        </action>
+        <action name="signUpAction_*" method="{1}" class="com.sample.action.signUpAction">
+            <result name="success" type="json">
+                <param name="root">jsonObject</param>
+                <param name="contentType">application/json</param>
+            </result>
+        </action>
+        <action name="proxyAction_*" method="{1}" class="com.sample.action.proxyAction">
+            <result name="success" type="json">
+                <param name="root">jsonObject</param>
+                <param name="contentType">application/json</param>
+            </result>
+        </action>
+        <action name="ptAction_*" method="{1}" class="com.sample.action.patientTicketAction">
+            <result name="success" type="json">
+                <param name="root">jsonObject</param>
+                <param name="contentType">application/json</param>
+            </result>
+        </action>
+        <action name="bxAction_*" method="{1}" class="com.sample.action.baoxiaoAction">
+            <result name="success" type="json">
+                <param name="root">jsonObject</param>
+                <param name="contentType">application/json</param>
+            </result>
+        </action>
+    </package>
+    <constant name="struts.i18n.encoding" value="utf-8"></constant>
+    <constant name="struts.multipart.saveDir" value="/tmp"/>
+    <constant name="struts.multipart.maxSize"  value="200000000"/>
+</struts>

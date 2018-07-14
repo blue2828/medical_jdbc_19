@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>慢性病政策管理</title>
+    <style>
+        .layui-form-item {
+            margin-left : 8%;
+        }
+    </style>
+</head>
+<body>
+<button style="margin : 5px 0 0 2px;" type="button" class="add layui-btn layui-btn-normal"><i class="layui-icon">&#xe654;</i><span>添加</span></button>
+<table id="proxy_tb" lay-filter="tb_filter"></table>
+<div class="layui-hide" id="tb">
+    <button class="layui-btn layui-btn-mini" lay-event="edit"><i class="layui-icon">&#xe642;</i><span>编辑</span></button>
+</div>
+<div id="infoFrame" style="display:none;margin-top:10px;">
+    <form method="post" id="fm" class="layui-form layui-form-pane" lay-filter="form_filter">
+        <div id="annual" class="layui-form-item">
+            <label class="layui-form-label">年度</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" id="date" name="proxy.annual" placeholder="年度">
+            </div>
+        </div>
+        <div id="top_line" class="layui-form-item">
+            <label class="layui-form-label">封顶线</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" placeholder="封顶线" name="proxy.top_line" lay-verify="required">
+            </div>
+        </div>
+        <div id="proportion" class="layui-form-item">
+            <label class="layui-form-label">报销比例</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" placeholder="报销比例" name="proxy.proportion" lay-verify="required">
+            </div>
+        </div>
+        <button id="submit_btn" type="button" class="layui-hide layui-btn layui-btn-normal" style="margin-left:40%;" lay-filter="submit_filter" lay-submit>提交</button>
+    </form>
+</div>
+</body>
+
+<link rel="stylesheet" href="common/layui/css/layui.css" type="text/css">
+<script type="text/javascript" src="common/layui/layui.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/publicSetup.js"></script>
+<script>
+    layui.use(['layer', 'jquery', 'form', 'upload', 'element', 'table', 'laydate'], function () {
+        var layer = layui.layer, $ = layui.jquery, form = layui.form,
+            upload = layui.upload, element = layui.element, table = layui.table, laydate = layui.laydate;
+        var tableRender = table.render({
+            height : 400,
+            elem : '#proxy_tb',
+            url : 'proxyAction_getAllInfo',
+            page : true,
+            id : 'tb_id',
+            cols : [[
+                {field : 'checkbox', width : 80, checkbox : true},
+                {field : 'annual', title : '年度', align : 'center',  width : 200},
+                {field : 'top_line', title : '封顶线', align : 'center',  width : 200},
+                {field : 'proportion', title : '报销比例', align : 'center',  width : 200},
+                {title : '操作', align : 'center',  width : 200, toolbar : '#tb'},
+            ]]
+        });
+        laydate.render({
+            elem : '#date',
+            type : 'year'
+        });
+        $.post('userAction_getCurrentUser',function(result){
+            var currentUser = result.data[0];
+            if (currentUser.role_id == 1 || currentUser.role_id == 3 || currentUser.role_id == 4) {
+                $('.add').addClass('layui-hide');
+                $('.delAll').addClass('layui-hide');
+                $("button[lay-event='del']").addClass('layui-disabled');
+                $("button[lay-event='edit']").addClass('layui-disabled');
+            }
+        });
+        var saveUrl = '';
+        table.on('tool(tb_filter)', function(obj) {
+            var event = obj.event;
+            var data = obj.data;
+            if(event == 'edit') {
+                if ($(this).hasClass('layui-disabled')) return;
+                openFrame('编辑角色', 1, data.id);
+                $("input[name='proxy.annual']").val(data.annual);
+                $("input[name='proxy.top_line']").val(data.top_line);
+                $("input[name='proxy.proportion']").val(data.proportion);
+                form.render('select', 'form_filter');
+                saveUrl = 'proxyAction_saveProxy?version=1';
+            }
+        });
+        form.on('submit(submit_filter)',function(data) {
+            $.ajax({
+                url : saveUrl,
+                async : true,
+                contentType : 'application/json',
+                dataType : 'json',
+                data : data.field,
+                success : function(result) {
+                    if(result.success) {
+                        layer.msg('保存成功', {icon : 6, time : 1000});
+                        tableRender.reload('tb_id', {
+                            url : 'proxyAction_getAllInfo'
+                        });
+                        layer.closeAll('page');
+                        cleanFormCache();
+                    }else layer.msg(result.errMsg, {icon : 5, time : 1000});
+                },
+                error : function(result) {
+                    layer.msg('服务器出错，请联系管理员', {icon : 5});
+                }
+            });
+        });
+        var openFrame = function(title, openType, id){
+            var appendCNNode = function() {
+                $("#annual").before(
+                    "            <div id=\"proxyid\" class=\"layui-hide layui-form-item\">\n" +
+                    "                <label class=\"layui-form-label\">id</label>\n" +
+                    "                <div class=\"layui-input-inline\">\n" +
+                    "                    <input class=\"layui-input\" autocomplete=\"off\"  name=\"proxy.id\" value="+id+">\n" +
+                    "                </div>\n" +
+                    "            </div>"
+                );
+            };
+            if(openType == 0) {
+                if($("#proxyid").length != 0) $("#proxyid").remove();
+            }else {
+                if($("#proxyid").length == 0) {
+                    appendCNNode();
+                } else{
+                    $("#proxyid").remove();
+                    appendCNNode();
+                }
+            }
+            layer.open({
+                type : 1,
+                content : $('#infoFrame'),
+                btn : ['提交'],
+                title : title,
+                area : ['360px', '344px'],
+                yes : function(index, layero) {
+                    $('#submit_btn').click();
+                },
+                cancel : function(index, layero) {
+                    cleanFormCache();
+                },
+                end : function() {
+                    cleanFormCache();
+                }
+            });
+        };
+        var cleanFormCache = function() {
+            $("input[name='proxy.annual']").val('');
+            $("input[name='proxy.top_line']").val('');
+            $("input[name='proxy.proportion']").val('');
+        };
+        $('.add').click(function() {
+            openFrame('添加角色', 0, '');
+            saveUrl = 'proxyAction_saveProxy?version=0';
+        });
+    });
+</script>
+</html>

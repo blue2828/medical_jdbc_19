@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+    <title>慢性病报销系统</title>
+    <link rel="shortcut icon" href="images/title.ico"/>
+</head>
+<body>
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo"><span style="color: white;font-size:20px;">慢性病报销系统</span></div>
+        <ul class="layui-nav layui-layout-left" kit-navbar>
+            <li class="layui-nav-item">
+                <a href="#" kit-target data-options="{url:'pageController_welcome_main',icon:'&#xe68e',title:'首页',id:12}"><i
+                        class="layui-icon">&#xe68e;</i><span>首页</span></a>
+            </li>
+            <li class="layui-nav-item">
+                <a href="#"><i class="layui-icon">&#xe606;</i><span>联系我</span></a>
+            </li>
+        </ul>
+        <ul class="layui-nav layui-layout-right" kit-navbar>
+            <li class="layui-nav-item">
+                <a href="#" kit-target data-options="{id:6,url:'notice.html',title:'系统公告',icon:'&#xe645'}"><i
+                        class="layui-icon">&#xe645;</i><span>系统公告</span></a>
+            </li>
+            <li class="layui-nav-item">
+                <a href="#">&nbsp;<span class="userName"></span>&nbsp;<img id="littleImg" class="layui-nav-img"></a>
+                <dl class="layui-nav-child">
+                    <dd>
+                        <a href="#" id="11" data-options="{id:11,title:'个人资料',icon:'&#xe658'}">
+                            <i class="layui-icon">&#xe705;</i><span>个人资料</span>
+                        </a>
+                    </dd>
+                    <dd><a href="#" id="saveSetting"><i class="layui-icon">&#xe614;</i><span>安全设置</span></a></dd>
+                </dl>
+            </li>
+            <li class="layui-nav-item">
+                <a href="userAction_logout"><span>登出</span><i class="layui-icon">&#xe602;</i></a>
+            </li>
+        </ul>
+    </div>
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <ul class="layui-nav layui-nav-tree layui-bg-black" kit-navbar id="tree" lay-filter="nav">
+                <li class="layui-nav-item">
+                    <div style="text-align:center;"><img id="bigImg"
+                                                         style="width:80px;height:80px;border-radius:50%;border:4px solid #44576B;">
+                    </div>
+                    <div style="text-align:center;" id="welWord"></div>
+                </li>
+                <li class="layui-nav-item layui-nav-itemed" id="1">
+                    <a href="#">系统设置</a>
+                    <dl class="layui-nav-child">
+                        <dd id="101" class="layui-hide">
+                            <a href="#" kit-target data-options="{id:1,url:'pageController_user_roleManage',title:'角色管理',icon:'&#xe620'}">
+                                <i class="layui-icon">&#xe620;</i><span id="thisDot">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;角色管理</span>
+                            </a>
+                        </dd>
+                        <dd id="102" class="layui-hide">
+                            <a href="#" kit-target data-options="{id:3,title:'用户管理',icon:'&#xe631',url:'pageController_user_userList'}">
+                                <i class="layui-icon">&#xe631;</i><span>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;用户管理</span>
+                            </a>
+                        </dd>
+                        <dd id="103" class="layui-hide">
+                            <a href="#" kit-target id="baomiLi" data-options="{id:4,title:'菜单管理',icon:'&#xe653',url:'pageController_menu_menuManage'}">
+                                <i class="layui-icon">&#xe653;</i><span> &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;菜单管理</span>
+                            </a>
+                        </dd>
+                        <dd id="104" class="layui-hide">
+                            <a href="#" id="queryLi" kit-target data-options="{id:8,icon:'&#xe620',title:'农合经办点管理',url:'pageController_site_siteManage'}">
+                                <i class="layui-icon">&#xe620;</i><span> &nbsp;&nbsp;&nbsp; &nbsp;农合经办点管理</span>
+                            </a>
+                        </dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item" id="2">
+                    <a href="#" >(系统设置)行政区管理</a>
+                    <dl class="layui-nav-child">
+                        <dd id="201" class="layui-hide">
+                            <a href="#" kit-target data-options="{id:18,title:'县管理',icon:'&#xe614',url:'pageController_area_countyManage'}">
+                                <i class="layui-icon">&#xe614;</i><span>&nbsp;&nbsp;&nbsp;&nbsp;县管理</span>
+                            </a>
+                        </dd>
+                        <dd id="202" class="layui-hide">
+                            <a href="#" kit-target data-options="{id:19,title:'镇管理',icon:'&#xe614',url:'pageController_area_townManage'}">
+                                <i class="layui-icon">&#xe614;</i><span>&nbsp;&nbsp;&nbsp;&nbsp;镇管理</span>
+                            </a>
+                        </dd>
+                        <dd id="203" class="layui-hide">
+                            <a href="#" kit-target data-options="{id:20,title:'村管理',icon:'&#xe614',url:'pageController_area_countrysiteManage'}">
+                                <i class="layui-icon">&#xe614;</i><span>&nbsp;&nbsp;&nbsp;&nbsp;村管理</span>
+                            </a>
+                        </dd>
+                        <dd id="204" class="layui-hide">
+                            <a href="#" kit-target data-options="{id:21,title:'组管理',icon:'&#xe614',url:'pageController_area_siteGroupManage'}">
+                                <i class="layui-icon">&#xe614;</i><span>&nbsp;&nbsp;&nbsp;&nbsp;组管理</span>
+                            </a>
+                        </dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item" id="3">
+                    <a href="#">业务功能</a>
+                    <dl class="layui-nav-child">
+                        <dd id="301" class="layui-hide">
+                            <a href="#" kit-target data-options="{id:16,title:'家庭档案管理',icon:'&#xe705',url:'pageController_family_family'}">
+                                <i class="layui-icon">&#xe705;</i><span>&nbsp;&nbsp;&nbsp;&nbsp;家庭档案管理</span>
+                            </a>
+                        </dd>
+                        <dd id="302" class="layui-hide">
+                            <a href="#" kit-target data-options="{id:22,title:'参合登记',icon:'&#xe621',url:'pageController_joinNh_signUp'}">
+                                <i class="layui-icon">&#xe621;</i><span>&nbsp;&nbsp;&nbsp;&nbsp;参合登记</span>
+                            </a>
+                        </dd>
+                        <dd id="303" class="layui-hide">
+                            <a href="#" kit-target data-options="{id:23,title:'慢性病证管理',icon:'&#xe620',url:'pageController_patient_manage'}">
+                                <i class="layui-icon">&#xe620;</i><span>&nbsp;&nbsp;&nbsp;&nbsp;慢性病证管理</span>
+                            </a>
+                        </dd>
+                        <dd id="304" class="layui-hide">
+                            <a href="#" kit-target data-options="{id:30,title:'慢性病政策设置',icon:'&#xe620',url:'pageController_proxy_proxy'}">
+                                <i class="layui-icon">&#xe620;</i><span>&nbsp;&nbsp;&nbsp;&nbsp;慢性病政策设置</span>
+                            </a>
+                        </dd>
+                        <dd id="305" class="layui-hide">
+                            <a href="#" kit-target data-options="{id:36,title:'慢性病报销',icon:'&#x1007',url:'pageController_patient_baoxiao'}">
+                                <i class="layui-icon">&#x1007;</i><span>&nbsp;&nbsp;&nbsp;&nbsp;慢性病报销</span>
+                            </a>
+                        </dd>
+                        <dd id="306" class="layui-hide">
+                            <a href="#" kit-target data-options="{id:25,title:'慢病报销情况统计查询',icon:'&#xe629',url:'searchSignUp.html'}">
+                                <i class="layui-icon">&#xe629;</i><span>&nbsp;&nbsp;&nbsp;&nbsp;慢病报销情况统计查询</span>
+                            </a>
+                        </dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="layui-body" id="container">
+        <div style="padding-top:15px;">内容正在加载中...</div>
+    </div>
+    <div class="layui-footer">
+        <div style="text-align:center;" id="footer">lyh-慢性病报销系统</div>
+    </div>
+</div>
+<div id="fm" style="display:none;padding-left:12%;">
+    <span style="display:block;width:109px;height:40px;border:1px solid #E6E6E6;text-align:center;line-height:2.5em;margin-top:5px;">个人头像</span>
+    <img id="memberImg"
+         style="margin-left:36%;border-radius:50%;width:100px;height:100px;border:4px solid #44576B;margin-top:5px;"
+    >
+    <p style="padding-left:18px;" id="imgText"></p>
+    <div id="uploadImgFa" style="margin-left:36%;">
+        <button id="uploadImg" class="layui-btn layui-btn-normal" style="margin:5px 0px"><i
+                class="layui-icon">&#xe67c;</i><span>更换头像</span></button>
+    </div>
+    <form class="layui-form layui-form-pane" lay-filter="fm">
+        <div class="layui-form-item" id="inModule">
+            <label class="layui-form-label">账号</label>
+            <div class="layui-input-inline">
+                <input class="layui-input layui-disabled" id="userid" name="user.userid" readonly="true">
+            </div>
+            <label class="layui-form-label">性别</label>
+            <div class="layui-input-inline">
+                <select name="user.sex" id="sex" autocomplete="off" lay-verify="required">
+                    <option value="">选择性别...</option>
+                    <option value="0">男</option>
+                    <option value="1">女</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item" id="seModule">
+            <label class="layui-form-label">姓名</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" name="user.fullname" id="fullname" autocomplete="off"
+                       lay-verify="required">
+            </div>
+            <label class="layui-form-label">邮箱</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" id="email" name="user.email" autocomplete="off"
+                       lay-verify="email">
+            </div>
+        </div>
+        <div style="margin-left:200px;">
+            <button class="layui-hide layui-btn layui-btn-normal" id="submitBtn" type="button" lay-submit lay-filter="updateUserInfo">
+                <i class="layui-icon">&#xe618;</i><span>修改</span>
+            </button>
+        </div>
+    </form>
+</div>
+<div id="saveContent" style="display: none;padding:10px;">
+    <form class="layui-form layui-form-pane" lay-filter="fm2">
+        <div class="layui-hide layui-form-item hidden_no">
+            <label class="layui-form-label">账号</label>
+            <div class="layui-input-inline">
+                <input class="layui-input layui-disabled" name="user.userid" readonly="true">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <lable class="layui-form-label">原密码</lable>
+            <div class="layui-input-inline">
+                <input type='password' class="layui-input" auto-complete="off" id="pwd" lay-verify="required">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <lable class="layui-form-label">新密码</lable>
+            <div class="layui-input-inline">
+                <input type='password' class="layui-input" auto-complete="off" name="user.pwd" lay-verify="required">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <lable class="layui-form-label">确认新密码</lable>
+            <div class="layui-input-inline">
+                <input type='password' class="layui-input" id='rePwd' lay-verify="required" auto-complete="off">
+            </div>
+        </div>
+        <div style="margin-left:30%;margin-top: 30px;">
+            <button type="button" class="layui-hide layui-btn layui-btn-normal" lay-submit lay-filter="updatePwd">
+                <i class="layui-icon">&#xe618;</i><span>修改</span>
+            </button>
+        </div>
+    </form>
+</div>
+</body>
+    <link rel="stylesheet" href="common/layui/css/layui.css" type="text/css">
+    <link rel="stylesheet" href="common/layui/css/app.css" type="text/css">
+    <script type="text/javascript" src="common/layui/layui.js"></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <script type="text/javascript">
+        layui.config({
+            base: 'build/js/'
+        }).use(['app'], function () {
+            var app = layui.app;
+            app.set({
+                type: 'iframe'
+            }).init();
+        });
+        layui.use(['layer', 'jquery', 'laydate', 'form', 'upload', 'element'], function () {
+            var layer = layui.layer, $ = layui.jquery, laydate = layui.laydate, form = layui.form,
+                upload = layui.upload, element = layui.element;
+            $.post('userAction_getCurrentUser',function(result){
+                var currentUser = result.data[0];
+                $('.userName').text(currentUser.fullname);
+                $('#welWord').text("欢迎您！" + currentUser.fullname + (currentUser.sex == 1 ? '女士' : '先生'));
+                $("input[name='user.userid']").val(currentUser.userid);
+                $('#sex').val(currentUser.sex);
+                $('#fullname').val(currentUser.fullname);
+                $('#email').val(currentUser.email);
+                form.render("select", 'fm');
+                $.post('systemAction_getAllMenus', function(data) {
+                    $.each(data.data, function(key, value) {
+                        var role_id = value.role_id.split(",");
+                        $.inArray('' + currentUser.role_id, role_id) >= 0 ? $('#' + value.menu_no).removeClass("layui-hide") :
+                            undefined;
+                    });
+                }, 'json');
+            }, 'json');
+            document.getElementById("littleImg").src = 'userAction_getImageHeader?version=Math.ramdom()*' + new Date();
+            document.getElementById("bigImg").src = 'userAction_getImageHeader?version=Math.random()*' + new Date();
+            document.getElementById("memberImg").src = 'userAction_getImageHeader?version=Math.random()*' + new Date();
+            var cleanForm = function(formId) {
+                switch (formId) {
+                    case 'fm2':
+                        $('#pwd').val('');
+                        $("input[name='user.pwd']").val('');
+                        $('#rePwd').val('');
+                        break;
+                }
+            }
+            var openFrame = function(title, content, size) {
+                layer.open({
+                    type : 1,
+                    area : [size[0], size[1]],
+                    title : title,
+                    content : $(content),
+                    btn : ['更改'],
+                    yes : function(layero, index) {
+                        switch(title) {
+                            case '个人信息' : $("button[lay-filter='updateUserInfo']").click(); break;
+                            case '安全设置' : $("button[lay-filter='updatePwd']").click(); break;
+                        }
+                    },
+                    success : function(layero, index) {
+                        switch(title) {
+                            case '个人信息' :
+                                url = 'userAction_updateUserInfo';
+                                break;
+                            case '安全设置' :
+                                url = 'userAction_updatePwd';
+                                break;
+                        }
+                    },
+                    end : function() {
+                        cleanForm(title == '个人信息' ? 'fm' : 'fm2');
+                    }
+                });
+            }
+            form.on("submit(updateUserInfo)", function(data) {
+                $.ajax({
+                    url : 'userAction_updateUserInfo?updateType=0',
+                    dataType : 'json',
+                    data : data.field,
+                    contentType : 'application/json',
+                    async : true,
+                    success : function (result) {
+                        switch (result.success) {
+                            case true :
+                                layer.msg('修改成功', {icon : 6, time : 1000});
+                                $('.userName').text($('#fullname').val());
+                                layer.closeAll('page');
+                                break;
+                            case false :
+                                layer.msg(result.errMsg, {icon : 5, time : 1000});
+                                break;
+                        }
+                    },
+                    error : function () {
+                        layer.msg('服务器内部错误,请联系管理员解决', {icon : 5, time : 1000});
+                    }
+                });
+            });
+            form.on("submit(updatePwd)", function(data) {
+                $.post('userAction_getCurrentUser',function(result){
+                    if($('#pwd').val() != result.data[0].pwd) {
+                        layer.msg("原密码不对,请核实", {icon : 5, time : 1000});
+                        return;
+                    }
+                    if($("input[name='user.pwd']").val() != $('#rePwd').val()) {
+                        layer.msg('两次密码不一致', {icon : 5, time : 1000});
+                        return;
+                    }
+                    $.ajax({
+                        url : 'userAction_updateUserInfo?updateType=1',
+                        dataType : 'json',
+                        data : data.field,
+                        contentType : 'application/json',
+                        async : true,
+                        success : function (result) {
+                            switch (result.success) {
+                                case true :
+                                    layer.msg('修改成功', {icon : 6, time : 1000});
+                                    layer.closeAll('page');
+                                    break;
+                                case false :
+                                    layer.msg(result.errMsg, {icon : 5, time : 1000});
+                                    break;
+                            }
+                        },
+                        error : function () {
+                            layer.msg('服务器内部错误,请联系管理员解决', {icon : 5, time : 1000});
+                        }
+                    });
+                }, 'json');
+            });
+            $('#11').click(function() {
+                openFrame('个人信息', $('#fm'), ['800px', '500px']);
+            });
+            $('#saveSetting').click(function() {
+                openFrame('安全设置', $('#saveContent'), ['400px', '300px']);
+            });
+            var uploadOption = upload.render({
+                url: 'userAction_updateImg?Math.random()*' + new Date(),
+                elem: '#uploadImg',
+                size: 10000000,
+                before: function (obj) {
+                    obj.preview(function (index, file, result) {
+                        $('#memberImg').attr('src', result);
+                    });
+                },
+                done: function (res, index, upload) {
+                    if (res.success) {
+                        layer.alert('上传成功', {icon: 6});
+                        $('#imgText').html('');
+                        document.getElementById("littleImg").src = 'userAction_getImageHeader?version=Math.ramdom()*' + new Date();
+                        document.getElementById("bigImg").src = 'userAction_getImageHeader?version=Math.random()*' + new Date();
+                        document.getElementById("memberImg").src = 'userAction_getImageHeader?version=Math.random()*' + new Date();
+                    } else {
+                        layer.alert(res.errMsg, {icon: 5});
+                    }
+                },
+                error: function (index, upload) {
+                    $('#imgText').html("<span style='color:red;margin-left:36%;'>失败&nbsp;&nbsp;</span><button type='button' id='retry' class='layui-btn layui-btn-mini'>重试</button>");
+                    $('#retry').on('click', function () {
+                        uploadOption.upload();
+                    });
+                }
+            });
+        });
+    </script>
+</html>

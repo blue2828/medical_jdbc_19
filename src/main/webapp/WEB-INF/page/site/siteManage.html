@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>经办点管理</title>
+</head>
+<body>
+    <button style="margin : 5px 0 0 2px;" type="button" class="add layui-btn layui-btn-normal"><i class="layui-icon">&#xe654;</i><span>添加</span></button>
+    <button style="margin : 5px 0 0 2px;" type="button" class="delAll layui-btn layui-btn-danger"><i class="layui-icon">&#xe640;</i><span>批量删除</span></button>
+    <form class="layui-form layui-inline">
+        <div class="layui-inline" style="margin:5px 0 0 10px;">
+            <input class="layui-input" placeholder="根据经办点名字检索" name="agentName">
+        </div>
+        <div class="layui-inline" style="margin:5px 0 0 10px;">
+            <input class="layui-input" placeholder="根据经办机构编码检索" name="site_no">
+        </div>
+        <button type="button" class="layui-btn layui-btn-normal" lay-submit lay-filter="search_filter">
+            <i class="layui-icon">&#xe615;</i><span>检索</span>
+        </button>
+    </form>
+    <table id="userList_tb" lay-filter="tb_filter"></table>
+    <div class="layui-hide" id="tb">
+        <button class="layui-btn layui-btn-normal layui-btn-mini" lay-event="del"><i class="layui-icon">&#xe640;</i><span>删除</span></button>
+        <button class="layui-btn layui-btn-mini" lay-event="edit"><i class="layui-icon">&#xe642;</i><span>编辑</span></button>
+    </div>
+    <div id="infoFrame" style="display:none;margin:20px 0 0 6%;">
+        <form method="post" id="fm" class="layui-form layui-form-pane" lay-filter="form_filter">
+            <div id="countyName" class="layui-form-item">
+                <label class="layui-form-label">县</label>
+                <div class="layui-input-inline">
+                    <select name="handle_site.ct_no" lay-filter="co_select" lay-verify="required">
+                        <option value="">请选择...</option>
+                    </select>
+                </div>
+                <div id="townField">
+                    <label class="layui-form-label">镇</label>
+                    <div class="layui-input-inline">
+                        <select name="handle_site.town_no" lay-filter="town_select">
+                            <option value="">请选择...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div id="agentName" class="layui-form-item">
+                <label class="layui-form-label">机构名</label>
+                <div class="layui-input-inline">
+                    <input class="layui-input" autocomplete="off" placeholder="机构名" name="handle_site.agentName" lay-verify="required">
+                </div>
+            </div>
+            <button id="submit_btn" type="button" class="layui-hide layui-btn layui-btn-normal" style="margin-left:40%;" lay-filter="submit_filter" lay-submit>提交</button>
+        </form>
+    </div>
+</body>
+
+    <link rel="stylesheet" href="common/layui/css/layui.css" type="text/css">
+    <script type="text/javascript" src="common/layui/layui.js"></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <script>
+        layui.use(['layer', 'jquery', 'form', 'upload', 'element', 'table'], function () {
+            var layer = layui.layer, $ = layui.jquery, form = layui.form,
+                upload = layui.upload, element = layui.element, table = layui.table;
+            var tableRender = table.render({
+                height : 400,
+                elem : '#userList_tb',
+                url : 'handleSiteAction_getAllSites',
+                page : true,
+                id : 'tb_id',
+                cols : [[
+                    {field : 'checkbox', width : 80, checkbox : true},
+                    {field : 'agentNo', title : '所属行政编号', align : 'center',  width : 180},
+                    {field : 'site_no', title : '经办机构编码', align : 'center',  width : 180},
+                    {field : 'agentName', title : '机构名称', align : 'center',  width : 300},
+                    {field : 'level', title : '等级', align : 'center',  width : 100},
+                    {title : '操作', align : 'center',  width : 200, toolbar : '#tb'},
+                ]]
+            });
+            $.post('areaAction_getCounties', function(result) {
+                if($("select[name='handle_site.ct_no']").children().length > 1) {
+                    $("select[name='handle_site.ct_no']").children().each(function(key, value) {
+                        if(key == 0) return true;
+                        else $(value).remove();
+                    });
+                }
+                $.each(result.data, function(key, value) {
+                    $("select[name='handle_site.ct_no']").append("<option value=" + value.countyNo + ">" + value.countyName + "</option>");
+                });
+                form.render('select', 'form_filter');
+            }, 'json');
+            form.on('select(co_select)', function(data) {
+                $.post('areaAction_getTowns?getVersion=getByCascade&countyId=' + data.value, function(result) {
+                    if($("select[name='handle_site.town_no']").children().length > 1) {
+                        $("select[name='handle_site.town_no']").children().each(function(key, value) {
+                            if(key == 0) return true;
+                            else $(value).remove();
+                        });
+                    }
+                    $.each(result.data, function(key, value) {
+                        $("select[name='handle_site.town_no']").append("<option value=" + value.t_townNo + ">" + value.townName + "</option>");
+                    });
+                    form.render('select','form_filter');
+                }, 'json');
+            });
+            var delMethod = function(obj, id) {
+                layer.confirm('确定要删除吗？', {title:'系统提示', icon : 3}, function(index) {
+                    layer.close(index);
+                    $.post('handleSiteAction_delSite', {'ids' : id}, function(result) {
+                        if(result.success) {
+                            if(obj != undefined) obj.del();
+                            else {
+                                tableRender.reload('tb_id', {
+                                    url : 'handleSiteAction_getAllSites'
+                                });
+                            }
+                        }else{
+                            result.errMsg == undefined ? layer.msg("系统错误，请联系管理员", {icon:5}) : layer.msg(result.errMsg, {icon : 5});
+                        }
+                    });
+                });
+            };
+            var saveUrl = '';
+            table.on('tool(tb_filter)', function(obj) {
+                var event = obj.event;
+                var data = obj.data;
+                if(event == 'del') delMethod(obj, data.userid);
+                if(event == 'edit') {
+                    openFrame('编辑经办点', 1, data.id);
+                    $("input[name='handle_site.agentName']").val(data.agentName);
+                    saveUrl = 'handleSiteAction_saveSite?version=1';
+                }
+            });
+            $('.delAll').click(function() {
+                var checkStatus = table.checkStatus('tb_id');
+                var data = checkStatus.data;
+                if(data.length == 0) layer.msg("请选择需要删除的行", {icon : 5});
+                else{
+                    var idArray = [];
+                    $.each(data, function(key, value) {
+                        idArray.push(value.userid);
+                    });
+                    var ids = idArray.join(",");
+                    delMethod(undefined, ids);
+                }
+            });
+            form.on('submit(search_filter)', function(data) {
+                tableRender.reload({
+                    url : 'handleSiteAction_getAllSites',
+                    where : {
+                        'handle_site.site_no' : data.field.site_no,
+                        'handle_site.agentName' : data.field.agentName
+                    }
+                });
+            });
+            form.on('submit(submit_filter)', function(data) {
+                $.ajax({
+                    url : saveUrl,
+                    async : true,
+                    contentType : 'application/json',
+                    dataType : 'json',
+                    data : data.field,
+                    success : function(result) {
+                        if(result.success) {
+                            layer.msg('保存成功', {icon : 6, time : 1000});
+                            tableRender.reload('tb_id', {
+                                url : 'handleSiteAction_getAllSites'
+                            });
+                            layer.closeAll('page');
+                            cleanFormCache();
+                        }else layer.msg(result.errMsg, {icon : 5, time : 1000});
+                    },
+                    error : function(result) {
+                        layer.msg('服务器出错，请联系管理员', {icon : 5});
+                    }
+                });
+            });
+            var toggleBtn = function () {
+                layer.open({
+                    type : 0,
+                    content : '请选择添加经办点的级别',
+                    title : '选择类型',
+                    btn : [ '取消', '县级', '乡镇级'],
+                    area : ['300px', '180px'],
+                    btn2 : function(index, layero) {
+                        openFrame('添加县级经办点', 0, undefined);
+                        layer.close(index);
+                    },
+                    btn3 : function(index, layero) {
+                        openFrame("添加镇级经办点", 0, undefined);
+                    }
+                });
+            };
+            var openFrame = function(title, openType, id){
+                var appendCNNode = function() {
+                    $("#countyName").before(
+                        "            <div id=\"site_id\" class=\"layui-hide layui-form-item\">\n" +
+                        "                <label class=\"layui-form-label\">id</label>\n" +
+                        "                <div class=\"layui-input-inline\">\n" +
+                        "                    <input class=\"layui-input\" autocomplete=\"off\"  name=\"handle_site.id\" value="+id+">\n" +
+                        "                </div>\n" +
+                        "            </div>"
+                    );
+                };
+                var size = '';
+                if (openType == 1) {
+                    size = [400, 200];
+                    $('#townField').addClass("layui-hide");
+                    $('#countyName').addClass('layui-hide');
+                    $("select[name='handle_site.ct_no']").removeAttr('lay-verify');
+                }else {
+                    $('#townField').removeClass("layui-hide");
+                    $('#countyName').removeClass('layui-hide');
+                    $("select[name='handle_site.ct_no']").attr('lay-verify', 'required');
+                }
+                if(title.indexOf('县级') > -1)
+                    $('#townField').addClass("layui-hide");
+                else
+                    $('#townField').removeClass('layui-hide');
+                if(openType == 0) {
+                    size = [700, 360];
+                    if($("#site_id").length != 0) $("#site_id").remove();
+                }else {
+                    if($("#site_id").length == 0) {
+                        appendCNNode();
+                    } else{
+                        $("#site_id").remove();
+                        appendCNNode();
+                    }
+                }
+                layer.open({
+                    type : 1,
+                    content : $('#infoFrame'),
+                    btn : ['提交'],
+                    title : title,
+                    area : [size[0] + 'px', size[1] + 'px'],
+                    yes : function(index, layero) {
+                        $('#submit_btn').click();
+                    },
+                    cancel : function(index, layero) {
+                        cleanFormCache();
+                    },
+                    end : function() {
+                        cleanFormCache();
+                    }
+                });
+            };
+            var cleanFormCache = function() {
+                $("select[name='handle_site.ct_no']").val('');
+                $("select[name='handle_site.town_no']").val('');
+                $("input[name='handle_site.agentName']").val('');
+                form.render('select', 'form_filter');
+            };
+            $('.add').click(function() {
+                toggleBtn();
+                saveUrl = 'handleSiteAction_saveSite?version=0';
+            });
+        });
+    </script>
+</html>

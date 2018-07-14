@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户列表</title>
+</head>
+<body>
+<button style="margin : 5px 0 0 2px;" type="button" class="add layui-btn layui-btn-normal"><i class="layui-icon">&#xe654;</i><span>添加</span></button>
+<button style="margin : 5px 0 0 2px;" type="button" class="delAll layui-btn layui-btn-danger"><i class="layui-icon">&#xe640;</i><span>批量删除</span></button>
+<table id="userList_tb" lay-filter="tb_filter"></table>
+<div class="layui-hide" id="tb">
+    <button class="layui-btn layui-btn-normal layui-btn-mini" lay-event="del"><i class="layui-icon">&#xe640;</i><span>删除</span></button>
+    <button class="layui-btn layui-btn-mini" lay-event="edit"><i class="layui-icon">&#xe642;</i><span>编辑/分配角色</span></button>
+</div>
+<div id="infoFrame" style="display:none;margin:20px 0 0 6%;">
+    <form method="post" id="fm" class="layui-form layui-form-pane" lay-filter="form_filter">
+        <div id="col-1" class="layui-form-item">
+            <label class="layui-form-label">角色等级</label>
+            <div class="layui-input-inline">
+                <select name="user.role_id" lay-filter="level_filter" lay-verify="required">
+                    <option value="">请选择...</option>
+                </select>
+            </div>
+            <label class="layui-form-label">用户名</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" placeholder="用户名" name="user.fullname" lay-verify="required">
+            </div>
+        </div>
+        <div id="col-2" class="layui-form-item">
+            <label class="layui-form-label">邮箱</label>
+            <div class="layui-input-inline">
+                <input class="layui-input" autocomplete="off" placeholder="邮箱" name="user.email" lay-verify="email">
+            </div>
+            <label class="layui-form-label">性别</label>
+            <div class="layui-input-inline">
+                <select name="user.sex" lay-filter="sex_filter" lay-verify="required">
+                    <option value="">请选择...</option>
+                    <option value="0">男</option>
+                    <option value="1">女</option>
+                </select>
+            </div>
+        </div>
+        <button id="submit_btn" type="button" class="layui-hide layui-btn layui-btn-normal" style="margin-left:40%;" lay-filter="submit_filter" lay-submit>提交</button>
+    </form>
+</div>
+</body>
+
+<link rel="stylesheet" href="common/layui/css/layui.css" type="text/css">
+<script type="text/javascript" src="common/layui/layui.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/publicSetup.js"></script>
+<script>
+    layui.use(['layer', 'jquery', 'form', 'upload', 'element', 'table'], function () {
+        var layer = layui.layer, $ = layui.jquery, form = layui.form,
+            upload = layui.upload, element = layui.element, table = layui.table;
+        var tableRender = table.render({
+            height : 400,
+            elem : '#userList_tb',
+            url : 'userAction_getAllUsers',
+            page : true,
+            id : 'tb_id',
+            cols : [[
+                {field : 'checkbox', width : 80, checkbox : true},
+                {field : 'userid', title : '编号', align : 'center',  width : 100},
+                {field : 'fullname', title : '用户名', align : 'center',  width : 180},
+                {field : 'email', title : '邮箱', align : 'center',  width : 180},
+                {field : 'role_name', title : '权限等级', align : 'center',  width : 180},
+                {field : 'u_sex', title : '性别', align : 'center',  width : 100},
+                {title : '操作', align : 'center',  width : 200, toolbar : '#tb'},
+            ]]
+        });
+        $.post('roleAction_getAllRoles ', function(result) {
+            if($("select[name='user.role_id']").children().length > 1) {
+                $("select[name='user.role_id']").children().each(function(key, value) {
+                    if(key == 0) return true;
+                    else $(value).remove();
+                });
+            }
+            $.each(result.data, function(key, value) {
+                $("select[name='user.role_id']").append("<option value=" + value.level + ">" + value.role_level + "</option>");
+            });
+            form.render('select', 'form_filter');
+        }, 'json');
+        var delMethod = function(obj, id) {
+            layer.confirm('确定要删除吗？', {title:'系统提示', icon : 3}, function(index) {
+                layer.close(index);
+                $.post('userAction_delUser', {'ids' : id}, function(result) {
+                    if(result.success) {
+                        if(obj != undefined) obj.del();
+                        else {
+                            tableRender.reload('tb_id', {
+                                url : 'userAction_getAllUsers'
+                            });
+                        }
+                    }else{
+                        result.errMsg == undefined ? layer.msg("系统错误，请联系管理员", {icon:5}) : layer.msg(result.errMsg, {icon : 5});
+                    }
+                });
+            });
+        };
+        var saveUrl = '';
+        table.on('tool(tb_filter)', function(obj) {
+            var event = obj.event;
+            var data = obj.data;
+            if(event == 'del') delMethod(obj, data.userid);
+            if(event == 'edit') {
+                openFrame('编辑角色', 1, data.userid);
+                $("input[name='user.fullname']").val(data.fullname);
+                $("select[name='user.role_id']").val(data.role_id);
+                $("input[name='user.email']").val(data.email);
+                $("select[name='user.sex']").val(data.sex);
+                form.render('select', 'form_filter');
+                saveUrl = 'userAction_saveUser?updateType=1';
+            }
+        });
+        $('.delAll').click(function() {
+            var checkStatus = table.checkStatus('tb_id');
+            var data = checkStatus.data;
+            if(data.length == 0) layer.msg("请选择需要删除的行", {icon : 5});
+            else{
+                var idArray = [];
+                $.each(data, function(key, value) {
+                    idArray.push(value.userid);
+                });
+                var ids = idArray.join(",");
+                delMethod(undefined, ids);
+            }
+        });
+        $('.search').click(function() {
+            var info = $('.searchInfo').val();
+            tableRender.reload({
+                url : 'userAction_getAllUsers',
+                where : {
+                    searchInfo : info
+                }
+            });
+        });
+        form.on('submit(submit_filter)',function(data) {
+            $.ajax({
+                url : saveUrl,
+                async : true,
+                contentType : 'application/json',
+                dataType : 'json',
+                data : data.field,
+                success : function(result) {
+                    if(result.success) {
+                        layer.msg('保存成功', {icon : 6, time : 1000});
+                        tableRender.reload('tb_id', {
+                            url : 'userAction_getAllUsers'
+                        });
+                        layer.closeAll('page');
+                        cleanFormCache();
+                    }else layer.msg(result.errMsg, {icon : 5, time : 1000});
+                },
+                error : function(result) {
+                    layer.msg('服务器出错，请联系管理员', {icon : 5});
+                }
+            });
+        });
+        var openFrame = function(title, openType, id){
+            var appendCNNode = function() {
+                $("#col-1").before(
+                    "            <div id=\"userid\" class=\"layui-hide layui-form-item\">\n" +
+                    "                <label class=\"layui-form-label\">id</label>\n" +
+                    "                <div class=\"layui-input-inline\">\n" +
+                    "                    <input class=\"layui-input\" autocomplete=\"off\"  name=\"user.userid\" value="+id+">\n" +
+                    "                </div>\n" +
+                    "            </div>"
+                );
+            };
+            if(openType == 0) {
+                if($("#userid").length != 0) $("#countyId").remove();
+            }else {
+                if($("#userid").length == 0) {
+                    appendCNNode();
+                } else{
+                    $("#userid").remove();
+                    appendCNNode();
+                }
+            }
+            layer.open({
+                type : 1,
+                content : $('#infoFrame'),
+                btn : ['提交'],
+                title : title,
+                area : ['700px', '300px'],
+                yes : function(index, layero) {
+                    $('#submit_btn').click();
+                },
+                cancel : function(index, layero) {
+                    cleanFormCache();
+                },
+                end : function() {
+                    cleanFormCache();
+                }
+            });
+        };
+        var cleanFormCache = function() {
+            $("input[name='user.fullname']").val('');
+            $("input[name='user.email']").val('');
+            $("select[name='user.sex']").val('');
+            $("select[name='user.role_id']").val('');
+            form.render('select', 'form_filter');
+        };
+        $('.add').click(function() {
+            openFrame('添加角色', 0, '');
+            saveUrl = 'userAction_saveUser?updateType=0';
+        });
+    });
+</script>
+</html>

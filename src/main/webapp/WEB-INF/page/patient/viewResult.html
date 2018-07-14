@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>签领表</title>
+    <style>
+        .sub2 {
+            width : 18%;
+            float : left;
+        }
+        .sub1 {
+            width : 40%;
+            float : left;
+        }
+        .sub3 {
+            width : 40%;
+            float : right;
+        }
+        .sub1, .sub1, .sub3, p {
+            color : #737373;
+            line-height : 2em;
+            letter-spacing : 3px;
+        }
+        p {
+            font-size : 28px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sub1">
+            <ul>
+                <li>姓名：</li>
+                <li>性别：</li>
+                <li>身份证：</li>
+                <li>参合证号：</li>
+            </ul>
+        </div>
+        <div class="sub2">
+            <p>签到表</p>
+        </div>
+        <div class="sub3">
+            <ul>
+                <li>报销时间：</li>
+                <li>经办人姓名：</li>
+                <li>报销额度：</li>
+                <li>慢性病名：</li>
+            </ul>
+        </div>
+    </div>
+
+</body>
+    <link rel="stylesheet" href="common/layui/css/layui.css" type="text/css">
+    <script type="text/javascript" src="common/layui/layui.js"></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/publicSetup.js"></script>
+    <script>
+        layui.use(['layer', 'jquery', 'form'], function () {
+            var layer = layui.layer, $ = layui.jquery, form = layui.form;
+            var identity_id = window.location.search.split("=");
+            $.post('bxAction_viewResult', {'identity_id' : identity_id}, function (result) {
+
+            });
+        });
+    </script>
+</html>

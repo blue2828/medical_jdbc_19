@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+    <link rel="shortcut icon" href="../images/title.ico"/>
+</head>
+<body >
+<div style="width:100%; height:100%; position:absolute; background:url(../images/bg.jpg)"></div>
+<div id="test"
+     style="width:500px;height:420px;background-repeat:repeat-y;display:none;">
+    <div style="font-size:22px;margin-left:190px;">慢性病报销系统</div>
+    <div class="layui-tab layui-tab-brief">
+        <ul class="layui-tab-title" style="margin-left:150px;">
+            <li class="layui-this"><font >登录</font></li>
+            <li><font >注册</font></li>
+        </ul>
+        <div class="layui-tab-content" style="margin-left:100px;margin-top:20px;">
+            <div class="layui-tab-item layui-show">
+                <form id="login" class="layui-form layui-form-pane" lay-filter="login">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label"><i class="layui-icon">&#xe642;</i></label>
+                        <div class="layui-input-inline">
+                            <input type="text" class="layui-input" name="user.userid" id="memberId1"
+                                   placeholder="请输入账号" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label"><i class="layui-icon">&#xe612;</i></label>
+                        <div class="layui-input-inline">
+                            <input type="password" class="layui-input" name="user.pwd" id="memPassowrd1"
+                                   placeholder="请输入密码" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label"><i class="layui-icon">&#xe64a;</i></label>
+                        <div class="layui-input-inline">
+                            <input type="text" class="layui-input" name="code" id="code1" placeholder="验证码"
+                                   autocomplete="off">
+                        </div>
+                    </div>
+                    <div style="padding-left:100px;"><img id="imageCode1" style="height:30px;" src="../getCode"
+                                                          title="看不清，换一张" onclick="refresh(1)"/>&nbsp;<a
+                            href="javascript:refresh(1)" style="color:deepskyblue;">换一张</a></div>
+                    <button id="loginBtn" lay-submit lay-filter="loginBtn" style="margin-left:100px;margin-top:10px;"
+                            type="button" class="layui-btn">登录
+                    </button>
+                </form>
+            </div>
+            <div class="layui-tab-item">
+                <form id="register" class="layui-form layui-form-pane" lay-filter="register">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label"><i class="layui-icon">&#xe6b2;</i></label>
+                        <div class="layui-input-inline">
+                            <input type="text" class="layui-input" id="memName" name="user.userid"
+                                   placeholder="请输入姓名"
+                                   autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label"><i class="layui-icon">&#xe612;</i></label>
+                        <div class="layui-input-inline">
+                            <input type="password" class="layui-input" name="user.pwd" id="memPassword2"
+                                   placeholder="请输入密码" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label"><i class="layui-icon">&#xe64a;</i></label>
+                        <div class="layui-input-inline">
+                            <input type="text" class="layui-input" name="code" id="code2" placeholder="验证码"
+                                   autocomplete="off">
+                        </div>
+                        <input hidden="true" name="version" value="1">
+                    </div>
+                    <div style="padding-left:100px;"><img id="imageCode2" style="height:30px;" src="getCode"
+                                                          title="看不清，换一张" onclick="refresh(2)"/>&nbsp;<a
+                            href="javascript:refresh(2)" style="color:deepskyblue;">换一张</a></div>
+                    <button style="margin-left:100px;margin-top:10px;" lay-filter="regButton" lay-submit type="button"
+                            class="layui-btn">注册
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="../common/layui/css/layui.css" type="text/css" media="all">
+<script type="text/javascript" src="../common/layui/layui.js"></script>
+<script type="text/javascript">
+    layui.use(['layer', 'jquery', 'form', 'element'], function () {
+        var $ = layui.jquery, form = layui.form, layer = layui.layer, element = layui.element;
+        layer.open({
+            type: 1,
+            area: ['500px', '420px'],
+            closeBtn: 0,
+            title: '',
+            content: $('#test'),
+            scrollbar: true
+        });
+        form.on('submit(loginBtn)', function (data) {
+            var memberId = $("#memberId1").val();
+            if ($('#memberId1').val() == '') {
+                layer.msg("账号不能为空", {icon: 5, time: 1000});
+                return;
+            }
+            if ($('#memPassowrd1').val() == '') {
+                layer.msg("密码不能为空", {icon: 5, time: 1000});
+                return;
+            }
+            if ($('#code1').val() == '') {
+                layer.msg("验证码不能为空", {icon: 5, time: 1000});
+                return;
+            }
+            $.ajax({
+                cache: false,
+                dataType: 'json',
+                contentType: 'application/json',
+                async: true,
+                type: 'get',
+                data: data.field,
+                url: 'userAction_checkOrInputUser',
+                success: function (result) {
+                    // var res=eval("("+result+")");
+                    if (result.success) {
+                        location.href = "../pageController_user_index";
+                    } else {
+                        layer.msg(result.errMsg, {icon: 5, time: 1000});
+                    }
+                }
+            });
+        });
+        form.on('submit(regButton)', function (data) {
+            if ($('#memberId2').val() == '') {
+                layer.msg("账号不能为空", {icon: 5, time: 1000});
+                return;
+            }
+            if ($('#memPassowrd2').val() == '') {
+                layer.msg("密码不能为空", {icon: 5, time: 1000});
+                return;
+            }
+            if ($('#code2').val() == '') {
+                layer.msg("验证码不能为空", {icon: 5, time: 1000});
+                return;
+            }
+            $.ajax({
+                cache: false,
+                dataType: 'json',
+                contentType: 'application/json',
+                async: true,
+                type: 'get',
+                data: data.field,
+                url: 'memberAction_login',
+                success: function (result) {
+                    // var res=eval("("+result+")");
+                    if (result.success) {
+                        location.href = "index.html";
+                    } else {
+                        layer.msg("注册失败", {icon: 5, time: 1000});
+                    }
+                }
+            });
+        });
+    });
+
+    function refresh(type) {
+        document.getElementById("imageCode" + type + "").src = "getCode?Math.random()*" + new Date();
+    }
+</script>
+</body>
+</html>
